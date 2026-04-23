@@ -1,131 +1,94 @@
-# 💡 Skill 01 — Idea y Lógica de Negocio
+# Skill 01 — Idea y Lógica de Negocio
 
-> **Fase:** Inicio de proyecto  
-> **Objetivo:** Transformar una idea en un documento de dominio sólido antes de tocar código.
-
----
-
-## Cuándo usar este skill
-
-- Al iniciar un proyecto desde cero.
-- Al añadir un módulo nuevo que no estaba contemplado.
-- Cuando el equipo no tiene claridad sobre qué construir exactamente.
+Aplica estas instrucciones cuando el usuario esté iniciando un proyecto desde cero o añadiendo un módulo no documentado.
 
 ---
 
-## Proceso
+## Rol
 
-### Paso 1 — Definir el propósito y los actores
-
-Antes de escribir código, responde estas preguntas:
-
-```
-¿Para qué existe este sistema?
-¿Quién lo usa? (roles: administrador, recepcionista, cliente, etc.)
-¿Qué problema resuelve concretamente?
-¿Quiénes son los stakeholders? ¿Qué esperan?
-```
-
-### Paso 2 — Identificar las entidades del dominio
-
-Lista todas las entidades que el sistema maneja:
-
-```
-Entidades principales: Usuario, Producto, Pedido, Membresía, ...
-Relaciones: Un Usuario tiene muchos Pedidos. Un Pedido tiene muchos Productos.
-Enumeraciones: Estado del pedido (pendiente, activo, cerrado), Rol (admin, recepcionista)
-```
-
-### Paso 3 — Definir reglas de negocio
-
-Las reglas más importantes a documentar:
-
-```
-- Un pedido solo puede cancelarse si está en estado "pendiente".
-- Solo el administrador puede acceder al módulo de configuración.
-- El stock se descuenta al confirmar el pedido, no al crearlo.
-- Las transacciones de pago deben ser atómicas (todo o nada).
-```
-
-### Paso 4 — Mapear los flujos principales
-
-Describe en texto simple el flujo de cada actor:
-
-```
-Flujo de compra:
-1. Cliente selecciona productos
-2. Sistema valida stock
-3. Cliente confirma y paga
-4. Sistema descuenta stock y genera orden
-5. Admin ve la orden en el panel
-```
-
-### Paso 5 — Proponer endpoints REST (si aplica)
-
-```
-GET    /api/products          → listar productos
-POST   /api/orders            → crear orden
-PATCH  /api/orders/:id/status → cambiar estado
-DELETE /api/orders/:id        → cancelar (solo si pendiente)
-```
+Actúa como arquitecto de software senior. Tu tarea es transformar la descripción del proyecto en un documento de dominio sólido antes de generar ningún código.
 
 ---
 
-## Prompt para pedir esto a Claude
+## Qué debes producir
 
-```
-Voy a iniciar un proyecto: [descripción breve].
-Actores: [lista de roles].
-Entidades principales: [lista].
-Genera un documento logica.md con:
-- Propósito y stakeholders
-- Entidades, relaciones y enumeraciones
-- Reglas de negocio principales
-- Flujos de los actores principales
-- Endpoints REST propuestos
-Formato: markdown estructurado, sin código aún.
-```
+Genera el archivo `readmes/logica.md` con exactamente estas secciones:
+
+1. **Propósito del sistema y stakeholders** — qué resuelve y para quién.
+2. **Actores y permisos principales** — lista de roles y qué puede hacer cada uno.
+3. **Entidades, relaciones y enumeraciones** — con los valores posibles de cada enumeración.
+4. **Reglas de negocio** — mínimo 5, específicas y verificables (no generales).
+5. **Flujo paso a paso de cada actor principal** — pasos numerados.
+6. **Endpoints REST propuestos** — formato: `MÉTODO /ruta — descripción en una línea`.
 
 ---
 
-## Documento de salida esperado
+## Cuándo incluir sección de permisos
 
-Archivo: `readmes/logica.md` (o `docs/logica.md`)
+Si el proyecto tiene múltiples roles o menciona JWT/auth, añade la sección:
 
-```markdown
-# Lógica de Negocio — [Nombre del Proyecto]
+### Matriz de permisos
 
-## Propósito
-...
+Tabla con formato:
 
-## Actores y roles
-...
+| Recurso | Admin | [Rol 2] | [Rol 3] | Invitado |
+|---------|-------|---------|---------|----------|
+| crear usuario | ✅ | ❌ | ❌ | ❌ |
 
-## Entidades y relaciones
-...
+Cubre todos los recursos (entidades) y todas las acciones (crear, leer, actualizar, eliminar, listar, exportar).
 
-## Reglas de negocio
-...
+Además documenta:
+- ¿Los tokens expiran? ¿Hay refresh token?
+- ¿Hay sesiones por dispositivo o sesión única?
+- ¿Se registra la actividad de usuarios (audit log)?
 
-## Flujos principales
-...
+---
 
-## Endpoints propuestos
-...
+## Cuándo incluir sección de eventos en tiempo real
+
+Si el proyecto menciona notificaciones, actualizaciones en vivo, chats o cualquier funcionalidad que no requiera recargar la página, añade la sección:
+
+### Eventos en tiempo real (WebSockets)
+
+Para cada evento identifica:
+- Qué acción lo dispara y quién la ejecuta.
+- Quiénes deben recibir la actualización (todos, un grupo, un usuario específico).
+- Qué dato cambia en pantalla sin recargar.
+- Qué pasa si la conexión se pierde (degradación aceptable).
+
+---
+
+## Cuándo añadir un módulo nuevo a un proyecto existente
+
+Lee primero el `readmes/logica.md` existente. Luego extiéndelo añadiendo una nueva sección para el módulo con:
+- Entidades nuevas y cómo se relacionan con las existentes.
+- Reglas de negocio específicas del módulo.
+- Flujo del actor que lo usa.
+- Endpoints REST nuevos.
+
+No modifiques las secciones ya existentes del documento.
+
+---
+
+## Restricciones
+
+- No generes código ni migraciones en esta fase.
+- Si algo del dominio es ambiguo, pregunta en una sola línea antes de proceder.
+- Formato: markdown con headers `##`, sin emojis.
+- Las reglas de negocio deben ser específicas: "el precio no puede ser negativo" es válido; "el sistema debe ser seguro" no lo es.
+
+---
+
+## Estructura del archivo de salida
+
 ```
-
----
-
-## Reglas al usar este skill
-
-- ✅ Primero el documento, después el código.
-- ✅ Si algo no está claro en el dominio, pregunta antes de asumir.
-- ✅ Las reglas de negocio deben ser verificables (criterios de aceptación concretos).
-- ❌ No modelar la base de datos en este paso — eso va en el skill de arquitectura.
-- ❌ No empezar a generar migraciones hasta tener este documento aprobado.
-
----
-
-## Siguiente paso
-
-→ [`02-planificacion.md`](02-planificacion.md) — Convertir la lógica en tareas accionables.
+readmes/logica.md
+├── ## Propósito
+├── ## Actores y roles
+├── ## Entidades y relaciones
+├── ## Reglas de negocio
+├── ## Flujos principales
+├── ## Endpoints propuestos
+├── ## Matriz de permisos         (si hay roles)
+└── ## Eventos en tiempo real     (si hay WebSockets)
+```

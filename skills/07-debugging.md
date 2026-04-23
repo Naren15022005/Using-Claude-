@@ -1,184 +1,97 @@
-# 🐛 Skill 07 — Debugging y Resolución de Problemas
+# Skill 07 — Debugging
 
-> **Fase:** Durante el desarrollo  
-> **Objetivo:** Diagnosticar y resolver bugs de forma sistemática, atacando siempre la causa raíz.
-
----
-
-## Cuándo usar este skill
-
-- Cuando algo no funciona como se esperaba.
-- Cuando hay un error en consola, en logs o en la UI.
-- Cuando un test falla sin razón aparente.
-- Cuando el comportamiento del sistema cambió después de un commit.
+Aplica estas instrucciones cuando el usuario reporte que algo no funciona, haya un error en consola/logs/UI, o un test falle.
 
 ---
 
-## Flujo de debugging
+## Rol
 
-```
-1. REPRODUCIR → confirmar que el bug existe y es consistente
-       ↓
-2. DESCRIBIR → síntoma exacto + contexto + error exacto
-       ↓
-3. AISLAR → identificar la capa, archivo o función responsable
-       ↓
-4. DIAGNOSTICAR → Claude lee el código y propone causa raíz
-       ↓
-5. APLICAR FIX → cambio mínimo sobre los archivos afectados
-       ↓
-6. VERIFICAR → confirmar que el fix resuelve sin efectos secundarios
-       ↓
-7. ITERAR si no resuelve → más contexto, nuevo enfoque
-```
+Actúa como desarrollador senior especializado en diagnóstico. Tu trabajo es encontrar la causa raíz antes de proponer ningún fix.
 
 ---
 
-## Cómo reportar un bug a Claude
+## Proceso obligatorio
 
-### Plantilla de reporte
-
-```
-Bug: [descripción de una línea]
-Contexto: qué hice antes de que apareciera el error
-Esperado: qué debería pasar
-Observado: qué pasa en realidad
-Error exacto: [pegar solo las líneas relevantes del stack trace]
-Archivo/función: [path exacto donde crees que está el problema]
-```
-
-### Ejemplo concreto
-
-```
-Bug: la función de pago retorna undefined cuando el proveedor está caído
-Contexto: ejecuto POST /api/checkout con datos válidos
-Esperado: respuesta 503 con mensaje "servicio no disponible"
-Observado: respuesta 500 y error "Cannot read properties of undefined"
-Error: TypeError: Cannot read properties of undefined (reading 'status')
-       at PaymentService.processPayment (payment.service.ts:67)
-Archivo: src/services/payment.service.ts, línea 67
-```
+1. **Diagnostica primero** — no apliques ningún fix sin haber identificado la causa raíz.
+2. **Presenta el diagnóstico** en este formato:
+   - `[CAUSA RAÍZ]` — por qué está pasando esto
+   - `[FIX MÍNIMO]` — el cambio más pequeño posible para resolverlo sin efectos secundarios
+   - `[ARCHIVOS AFECTADOS]` — qué tocar y qué no tocar
+3. **Espera aprobación** antes de aplicar el fix.
+4. **Aplica el fix** solo en los archivos indicados, sin cambios adicionales.
+5. **Da el comando de verificación** para confirmar que el bug está resuelto.
 
 ---
 
-## Qué adjuntar al reporte
-
-| Incluir | No incluir |
-|---------|-----------|
-| Stack trace (solo líneas relevantes) | Stack trace completo de 200 líneas |
-| El fragmento de función afectada | El archivo entero |
-| Código de respuesta HTTP | Todos los headers de la request |
-| Variables de entorno relevantes (sin secretos) | Todo el .env |
-
----
-
-## Señales para identificar la capa del problema
+## Señales por capa para el diagnóstico
 
 | Síntoma | Capa probable |
 |---------|--------------|
-| Error 4xx al llamar la API | Validación o autenticación en backend |
-| Error 5xx | Lógica de negocio o DB |
+| Error 4xx al llamar la API | Validación o auth en backend |
+| Error 5xx | Lógica de negocio o BD |
 | UI no actualiza pero API responde bien | Estado frontend o caching |
-| Error de migración al arrancar | Schema de DB desincronizado |
-| Test falla después de un commit | Cambio en dependencias o contratos de función |
-| Comportamiento incorrecto sin error visible | Lógica de negocio o condición edge case |
+| Error de migración al arrancar | Schema de BD desincronizado |
+| Test falla después de un commit | Cambio en dependencias o contratos |
+| Comportamiento incorrecto sin error | Lógica de negocio o edge case |
+| WebSocket no recibe eventos | Autenticación del handshake o suscripción al canal incorrecto |
+| 401 en endpoint protegido | Token expirado, mal formado o no enviado |
+| 403 en endpoint protegido | Token válido pero rol insuficiente |
 
 ---
 
-## Resolución con Claude
+## Segundo intento (primer fix no funcionó)
 
-### Diagnóstico (leer antes de modificar)
-
-```
-Lee src/services/payment.service.ts y diagnostica:
-- Causa raíz del error en línea 67
-- Por qué falla cuando el proveedor retorna undefined
-- Propón el fix mínimo sin cambiar la interfaz pública del método
-```
-
-### Aplicar fix
-
-```
-Aplica el fix en src/services/payment.service.ts:
-- Manejar el caso en que provider.charge() retorna undefined o lanza excepción
-- Retornar error estructurado en lugar de propagar la excepción cruda
-No cambiar la firma del método ni los DTOs.
-```
-
-### Verificar
-
-```
-Dame los comandos para verificar que el fix funciona:
-- Test unitario que cubra el escenario del bug
-- Curl/comando de prueba manual
-```
+Si el fix anterior no resolvió el bug:
+- No insistas en el mismo enfoque.
+- Propone una estrategia diferente.
+- Presenta un nuevo diagnóstico antes de aplicar nada.
+- Explica por qué el enfoque anterior no funcionó.
 
 ---
 
-## Cuando el primer fix no funciona
+## Fixes que nunca debes proponer
 
-```
-El fix anterior no resolvió el bug.
-Nuevo contexto: [descripción actualizada]
-Nuevo error: [error actualizado]
-¿Qué cambió y qué no cambió?
-Propón una estrategia diferente — no insistir en el mismo enfoque.
-```
+Rechaza internamente estas soluciones y busca la causa real:
 
-**Regla:** Si después de dos intentos con el mismo enfoque no se resuelve, pedir un paso atrás y replantear la estrategia completa.
+- `try/catch` vacío que silencia el error sin manejarlo.
+- `|| {}` o `|| []` para evitar el undefined sin entender por qué llega ese estado.
+- `if` de guarda sin corregir la causa del estado inválido.
+- Comentar el código problemático.
+- Añadir un `console.log` y decir "funciona" sin entender por qué.
 
----
-
-## Fixes que no se aceptan
-
-- ❌ Silenciar el error con `try/catch` vacío.
-- ❌ Poner `|| {}` o `|| []` para evitar el undefined sin entender por qué llega undefined.
-- ❌ Añadir un `if` de guarda sin corregir la causa que genera el estado inválido.
-- ❌ Comentar el código problemático.
-
-**Lo que sí se acepta:**
-- ✅ Identificar por qué el estado inválido existe y prevenirlo en origen.
-- ✅ Validar en los bordes del sistema (entrada de datos) para que el estado inválido nunca llegue a la lógica interna.
-- ✅ Manejar explícitamente los casos de error con mensajes claros.
+En su lugar:
+- Identifica por qué existe el estado inválido y prevenirlo en origen.
+- Valida en los bordes del sistema (entrada de datos).
+- Maneja errores explícitamente con mensajes claros.
 
 ---
 
-## Debugging de migraciones (Laravel / Prisma)
+## Debugging de migraciones
 
-### Laravel
-
-```powershell
-php artisan migrate:status          # Ver estado de migraciones
-php artisan migrate --pretend       # Simular sin ejecutar
-php artisan migrate:fresh --seed    # Reset completo (solo local)
-```
-
-### Prisma
-
-```powershell
-npx prisma migrate status           # Ver estado
-npx prisma db push                  # Aplicar sin crear migration (solo dev)
-npx prisma studio                   # GUI para inspeccionar datos
-```
+Si el error es de migración:
+- Diagnostica la causa del error de schema.
+- Da el comando para resolverlo.
+- Indica cómo verificar que quedó correcto.
+- Nunca sugieras `migrate:fresh` sin advertir explícitamente que borra todos los datos.
 
 ---
 
-## Debugging de autenticación / permisos
+## Debugging de autenticación y JWT
 
-Checklist cuando aparece 401 o el usuario no puede acceder a algo que debería:
-
-- [ ] El token se está enviando en el header `Authorization: Bearer <token>`
-- [ ] El token no ha expirado
-- [ ] El rol del usuario está asignado correctamente en la BD
-- [ ] El middleware del endpoint está configurado para el rol correcto
-- [ ] El seed creó el usuario con el rol correcto
+Si el error está relacionado con auth:
+- Verifica si el token está siendo enviado correctamente (header Authorization: Bearer).
+- Verifica si el token está expirado o mal firmado.
+- Verifica si el payload del token tiene los roles necesarios.
+- Verifica si el guard está correctamente aplicado al endpoint.
+- Nunca sugiereas deshabilitar el guard como solución — ese es el camino incorrecto.
 
 ---
 
-## Reglas al usar este skill
+## Debugging de WebSockets
 
-- ✅ Siempre atacar la causa raíz, no el síntoma.
-- ✅ Adjuntar el error exacto — nunca describirlo de memoria.
-- ✅ Indicar el archivo y línea exacta si se conoce.
-- ❌ No aceptar fixes que solo ocultan el problema.
-- ❌ No insistir en el mismo enfoque más de dos veces.
+Si los eventos de tiempo real no llegan:
+- Verifica que el cliente se conectó exitosamente (evento `connect`).
+- Verifica que el JWT del handshake es válido y no está expirado.
+- Verifica que el cliente se suscribió al room/canal correcto.
+- Verifica que el servidor está emitiendo al room correcto (no al socket individual cuando debería ser broadcast).
+- Verifica que el evento se dispara desde el Service después de la acción en la BD.

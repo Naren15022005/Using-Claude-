@@ -1,144 +1,102 @@
-# 🔍 Skill 09 — Code Review con Claude
+# Skill 09 — Code Review
 
-> **Fase:** Antes de mergear o desplegar  
-> **Objetivo:** Detectar bugs reales, problemas de seguridad y errores de lógica antes de que lleguen a producción.
-
----
-
-## Cuándo usar este skill
-
-- Antes de hacer merge de una rama de feature.
-- Antes de hacer deploy.
-- Al revisar código de un colaborador.
-- Después de una sesión larga de implementación para detectar errores introducidos.
+Aplica estas instrucciones cuando el usuario pida revisar código antes de mergear, antes de un deploy, o después de una sesión de implementación.
 
 ---
 
-## Qué busca el code review
+## Rol
 
-| ✅ Revisar | ❌ No es scope del review |
-|-----------|--------------------------|
-| Bugs de lógica | Estilo de código (indentación, nombres) |
-| Vulnerabilidades de seguridad | Formateo y espacios |
-| Race conditions / concurrencia | Preferencias personales |
-| Manejo incorrecto de errores | Si se podría "hacer de otra forma" |
-| Datos sensibles expuestos | Comentarios en el código |
-| Queries N+1 | Nombres de variables |
-| Validaciones faltantes en bordes del sistema | |
+Actúa como revisor de código senior. Tu trabajo es encontrar problemas reales que puedan romper el sistema o comprometer la seguridad — no dar opiniones de estilo.
 
 ---
 
-## Prompt de code review básico
+## Qué buscar en un review general
 
-```
-Revisa los cambios en [archivo o rama]:
-Solo reporta:
-1. Bugs de lógica que puedan causar comportamiento incorrecto
-2. Vulnerabilidades de seguridad (SQL injection, XSS, exposición de datos, etc.)
-3. Race conditions o problemas de concurrencia
-4. Manejo incorrecto o faltante de errores
+Revisa únicamente:
 
-Para cada issue: [ARCHIVO:LÍNEA] / [PROBLEMA] / [FIX SUGERIDO]
-Ignora estilo, formateo y preferencias.
-```
+1. **Bugs de lógica** que puedan causar comportamiento incorrecto en condiciones normales o de edge case.
+2. **Vulnerabilidades de seguridad**: SQL injection, XSS, exposición de datos, bypass de autenticación o autorización.
+3. **Race conditions** o problemas de concurrencia.
+4. **Manejo incorrecto o faltante de errores** en los bordes del sistema (entrada de datos, respuestas externas).
+5. **Queries N+1** no optimizadas que puedan degradar el rendimiento bajo carga.
+
+**Formato de reporte**: `[ARCHIVO:LÍNEA] / [PROBLEMA] / [FIX SUGERIDO]`
 
 ---
 
-## Tipos de review por contexto
+## Review de módulo nuevo
 
-### Review de un módulo nuevo
+Para un módulo recién implementado, verifica específicamente:
 
-```
-Revisa el módulo recién implementado en src/modules/productos/:
-- ¿Hay validaciones faltantes en los DTOs?
-- ¿Los endpoints están protegidos con el middleware de auth correcto?
-- ¿Hay algún caso donde un usuario pueda acceder a datos de otro?
+- ¿Los DTOs/FormRequests validan todos los inputs antes de que lleguen a la BD?
+- ¿Todos los endpoints están protegidos con el guard de auth correcto?
+- ¿Hay algún endpoint donde un usuario pueda acceder o modificar datos de otro usuario?
 - ¿El manejo de errores es consistente con el resto de la API?
-Solo issues reales, no sugerencias de mejora.
-```
+- ¿Hay queries que puedan ser N+1 (especialmente en relaciones con eager loading faltante)?
 
-### Review de seguridad
+---
 
-```
-Haz un review de seguridad de [archivo]:
-- Busca: inyección SQL, XSS, exposición de datos sensibles, bypass de autenticación
-- Verifica: que los inputs se validan antes de llegar a la base de datos
-- Verifica: que los errores no exponen stack traces ni detalles internos al cliente
-```
+## Review de seguridad
 
-### Review de rendimiento
+Para un review enfocado en seguridad, busca específicamente:
 
-```
-Revisa [archivo] en busca de:
-- Queries N+1 (Eloquent: eager loading faltante, Prisma: include faltante)
-- Operaciones costosas dentro de loops
-- Requests a servicios externos dentro de transacciones de DB
-```
+- Inyección SQL o NoSQL (queries construidas con concatenación de strings).
+- XSS (datos del usuario no sanitizados en vistas o respuestas).
+- Exposición de datos sensibles en respuestas de la API (passwords, tokens, datos de tarjetas).
+- Bypass de autenticación o autorización (endpoints sin guard, lógica de permisos incorrecta).
+- Inputs que llegan a la BD, al sistema de archivos o a comandos del sistema sin validación.
+- Errores que exponen stack traces o detalles internos al cliente.
+- Secrets o API keys hardcodeados en el código.
 
-### Review de cambios antes de commit
+**Formato de reporte de seguridad**: `[RIESGO: CRÍTICO/ALTO/MEDIO] / [ARCHIVO:LÍNEA] / [PROBLEMA] / [FIX]`
 
-```
-Revisa los cambios de esta sesión antes de hacer commit:
-- ¿Hay debug logs o console.log que no deberían estar?
-- ¿Se introdujo algún TODO sin resolver?
+---
+
+## Review antes de commit
+
+Cuando el usuario pida revisar antes de hacer commit, verifica:
+
+- ¿Hay `console.log`, `dd()`, `dump()` o debug statements que no deben ir a producción?
+- ¿Hay TODOs sin resolver que bloqueen funcionalidad?
 - ¿Hay credenciales o secretos hardcodeados?
-- ¿Algún cambio puede romper funcionalidad existente?
-```
+- ¿Algún cambio puede romper funcionalidad existente en otro módulo?
 
 ---
 
-## Checklist de seguridad
+## Aplicar un fix de review
 
-Antes de cualquier deploy, verificar:
+Cuando el usuario pida aplicar un fix identificado en el review:
 
-- [ ] No hay credenciales hardcodeadas en el código
-- [ ] Las rutas protegidas tienen middleware de auth
-- [ ] Los inputs de usuario se validan antes de usarlos en queries
-- [ ] Los errores no exponen detalles del stack al cliente
-- [ ] Los endpoints que mutan datos (POST/PUT/PATCH/DELETE) requieren autenticación
-- [ ] HMAC o firma verificada en webhooks externos
-- [ ] Rate limiting en endpoints de auth (login, registro)
+- Aplica el fix mínimo que resuelva el problema.
+- No refactorices código que no tiene el problema identificado.
+- Mantén la interfaz pública del método.
+- Si el fix requiere un test, generalo junto con el fix.
 
 ---
 
-## Cómo reportar y resolver un issue de review
+## Checklist de seguridad pre-deploy
 
-```
-Issue encontrado en code review:
-Archivo: src/modules/auth/auth.service.ts, línea 89
-Problema: el error de login expone si el email existe o no en el sistema
-Riesgo: permite enumerar usuarios registrados
-Fix: retornar siempre el mismo mensaje genérico independientemente de si el email existe
-Aplica el fix.
-```
+Verifica el proyecto contra estos puntos antes de cada deploy a producción:
 
----
+- [ ] Sin credenciales hardcodeadas en el código.
+- [ ] Las rutas protegidas tienen el middleware de auth correcto.
+- [ ] Los inputs se validan en el servidor antes de usarlos en queries o comandos.
+- [ ] Los errores no exponen detalles del stack al cliente.
+- [ ] `POST`/`PUT`/`PATCH`/`DELETE` requieren autenticación.
+- [ ] Rate limiting en endpoints de auth (login, registro, recuperación de contraseña).
+- [ ] Los refresh tokens van en httpOnly cookie — no en el body ni en localStorage.
+- [ ] Los endpoints de admin tienen guard de rol además del guard de auth.
+- [ ] Los seeders de prueba no están habilitados en producción.
+- [ ] `APP_DEBUG=false` / `NODE_ENV=production`.
 
-## Review con el agente code-review
-
-Para sesiones largas o ramas con muchos cambios, usar el agente especializado:
-
-```
-Inicia un code review de la rama feature/checkout-module.
-Enfócate en:
-- Lógica de negocio del proceso de checkout
-- Manejo de errores del procesador de pagos
-- Concurrencia al actualizar stock
-Solo bugs y riesgos reales.
-```
+Para cada ítem que falte, indica el archivo y la línea donde está el problema.
 
 ---
 
-## Reglas al usar este skill
+## Lo que debes ignorar en el review
 
-- ✅ El review es el último paso antes del deploy.
-- ✅ Cada issue reportado tiene archivo, línea, problema y fix sugerido.
-- ✅ Los issues de seguridad se resuelven antes de mergear.
-- ❌ No bloquear el merge por estilo o preferencias personales.
-- ❌ No hacer review de archivos que no cambiaron en el PR.
-
----
-
-## Siguiente paso
-
-→ [`10-deploy-entrega.md`](10-deploy-entrega.md) — Checklist de cierre y deploy a producción.
+- Estilo de código, formateo, indentación.
+- Nombres de variables o funciones que son claros pero no perfectos.
+- Preferencias personales de implementación.
+- Comentarios faltantes o insuficientes.
+- Arquitectura general (eso va en la fase de arquitectura, no aquí).

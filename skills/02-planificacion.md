@@ -1,123 +1,77 @@
-# 📋 Skill 02 — Planificación y Gestión de Tareas
+# Skill 02 — Planificación y Tareas
 
-> **Fase:** Antes de codificar  
-> **Objetivo:** Convertir la lógica de negocio en tareas accionables, priorizadas y con criterios de aceptación claros.
-
----
-
-## Cuándo usar este skill
-
-- Justo después de tener `logica.md` aprobado.
-- Al iniciar un nuevo sprint o iteración.
-- Cuando el alcance del proyecto cambia o crece.
+Aplica estas instrucciones cuando el usuario tenga `readmes/logica.md` aprobado y necesite convertirlo en tareas accionables.
 
 ---
 
-## Estructura de tareas
+## Rol
 
-Las tareas se agrupan por área. Cada tarea tiene: descripción, prioridad y criterio de aceptación.
-
-### Áreas estándar
-
-| Área | Prioridad típica |
-|------|-----------------|
-| Backend (API, modelos, servicios) | Alta |
-| Frontend (vistas, componentes, UX) | Alta |
-| Base de datos (migraciones, seeds) | Alta |
-| Auth y permisos | Alta |
-| Testing | Media |
-| DevOps / Infraestructura | Media |
-| Seguridad | Media |
-| Rendimiento / Escalado | Baja (inicial) |
-| Documentación | Baja (continua) |
-| Scripts auxiliares | Baja |
+Actúa como tech lead senior. Convierte la lógica de negocio en tareas concretas, ordenadas y priorizadas.
 
 ---
 
-## Formato de tarea
+## Qué debes producir
 
-```markdown
-### [ÁREA] — [Nombre de la tarea]
-- **Prioridad:** Alta / Media / Baja
-- **Descripción:** Qué hay que hacer y por qué.
-- **Archivos implicados:** lista de paths relevantes (si ya se sabe)
-- **Criterio de aceptación:** cómo sé que esta tarea está terminada
-- **Dependencias:** qué debe estar listo antes
-```
+Genera el archivo `readmes/tareas.md` con exactamente esta estructura:
+
+### Tareas agrupadas por área
+
+Áreas obligatorias: Backend, Frontend, Base de datos, Auth, WebSockets (si aplica), Testing, DevOps, Documentación.
+
+Cada tarea debe tener:
+- **Prioridad**: Alta / Media / Baja
+- **Descripción**: qué hacer en 1-2 líneas (específico y accionable)
+- **Criterio de aceptación**: cómo saber que está terminada
+- **Dependencias**: qué debe estar listo antes (si aplica)
+
+### Reglas de prioridad
+
+- **Alta**: bloqueante — no se puede entregar el sistema sin esto.
+- **Media**: importante — afecta calidad o completitud.
+- **Baja**: deseable — se puede entregar sin esto en el primer sprint.
+
+### Sprint 1 — MVP
+
+Define el primer sprint con las 5-8 tareas más críticas para tener algo funcionando y demostrable. El sprint no puede tener más de 8 tareas. Las tareas deben estar ordenadas por dependencias.
 
 ---
 
-## Prompt para generar tareas.md con Claude
+## Cuándo actualizar el documento en un proyecto en curso
 
-```
-Basándote en readmes/logica.md, genera un archivo tareas.md con:
-- Tareas agrupadas por área (Backend, Frontend, BD, Auth, Testing, DevOps, Docs)
-- Cada tarea con: prioridad (Alta/Media/Baja), descripción de 1-2 líneas, criterio de aceptación
-- Un primer sprint con las 5-8 tareas más críticas para tener algo funcionando
-- Ordenadas por dependencias (qué debe ir primero)
-Sin código, solo la lista de tareas.
-```
+Si el usuario describe el estado actual y el objetivo del próximo sprint:
+- Marca como completadas `[x]` las tareas terminadas.
+- Añade las tareas nuevas que surgieron.
+- Define el próximo sprint con máximo 8 tareas priorizadas.
+- Registra cualquier cambio de alcance importante.
+- No elimines el historial de tareas anteriores — solo márcalas como completadas.
 
 ---
 
-## Gestión de prioridades
+## Restricciones
 
-**Regla principal:** No avanzar a una tarea de menor prioridad si hay bloqueantes pendientes en las de mayor prioridad.
+- Sin código.
+- Cada tarea debe ser específica y accionable — nunca escribir "mejorar el sistema" o "optimizar la app".
+- El Sprint 1 no puede tener más de 8 tareas.
+- Las tareas deben estar ordenadas por dependencias (la tarea que bloquea a otra va primero).
+
+---
+
+## Estructura del archivo de salida
 
 ```
-Alta   → Bloqueante. No se puede entregar sin esto.
-Media  → Importante. Afecta calidad o completitud.
-Baja   → Deseable. Se puede entregar sin esto en el primer sprint.
+readmes/tareas.md
+├── ## Backend
+│   ├── [ALTA] Descripción
+│   │   - Criterio: ...
+│   │   - Dependencias: ...
+├── ## Frontend
+├── ## Base de datos
+├── ## Auth
+├── ## WebSockets (si aplica)
+├── ## Testing
+├── ## DevOps
+├── ## Documentación
+└── ## Sprint 1 — MVP
+    ├── 1. [ALTA] ...
+    └── 8. [MEDIA] ...
 ```
-
-### Señales de que hay que replantear prioridades
-
-- Una tarea "media" bloquea otra "alta" → sube a alta.
-- Una tarea "alta" lleva más de 2 días bloqueada → escalar o rediseñar.
-- El primer sprint tiene más de 10 tareas → está sobreestimado, reducir.
-
----
-
-## Definir el primer sprint
-
-El primer sprint debe producir algo **demostrable y funcional**, aunque incompleto:
-
-```markdown
-## Sprint 1 — MVP funcional
-
-Objetivo: sistema corriendo con auth y módulo principal básico.
-
-Tareas:
-1. [ALTA] Crear migraciones de tablas principales
-2. [ALTA] Configurar roles y permisos (Spatie)
-3. [ALTA] Endpoint de autenticación (login/logout)
-4. [ALTA] CRUD básico del módulo principal
-5. [ALTA] Vistas básicas del módulo principal
-6. [MEDIA] Seeders con datos de demo
-```
-
----
-
-## Seguimiento durante el proyecto
-
-Mantener `tareas.md` actualizado conforme avanza el proyecto:
-
-- Marcar tareas completadas con `[x]`
-- Añadir tareas emergentes que aparezcan durante el desarrollo
-- Registrar decisiones importantes que afecten el alcance
-
----
-
-## Reglas al usar este skill
-
-- ✅ Toda tarea tiene criterio de aceptación antes de ejecutarse.
-- ✅ El primer sprint es pequeño y demostrable.
-- ✅ Las dependencias entre tareas están explícitas.
-- ❌ No crear tareas ambiguas tipo "mejorar el sistema" — siempre específicas.
-- ❌ No poner más de 8-10 tareas en un sprint.
-
----
-
-## Siguiente paso
-
-→ [`03-arquitectura.md`](03-arquitectura.md) — Definir el stack y la estructura técnica.

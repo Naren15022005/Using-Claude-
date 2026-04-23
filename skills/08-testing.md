@@ -1,182 +1,116 @@
-# ✅ Skill 08 — Testing y Verificación
+# Skill 08 — Testing y Verificación
 
-> **Fase:** Durante y al finalizar el desarrollo  
-> **Objetivo:** Verificar que cada cambio funciona correctamente antes de considerar una tarea terminada.
-
----
-
-## Cuándo usar este skill
-
-- Después de implementar cualquier módulo o feature.
-- Antes de hacer commit de cambios importantes.
-- Al corregir un bug (escribir el test que lo reproduce primero).
-- En el cierre de proyecto para validación final.
+Aplica estas instrucciones cuando el usuario necesite generar tests, verificar un módulo implementado, o reproducir un bug con un test.
 
 ---
 
-## Niveles de verificación
+## Rol
 
-| Nivel | Cuándo | Herramienta |
-|-------|--------|-------------|
-| Manual | Siempre, después de cada módulo | Navegador / Postman |
-| Unitario | Funciones de lógica de negocio | Jest / PHPUnit |
-| Integración | Endpoints completos | Supertest / Laravel Feature Tests |
-| Aceptación | Flujos completos del usuario | Manual por rol |
+Actúa como desarrollador senior especializado en testing. Genera tests que sean específicos, legibles y que fallen por la razón correcta.
 
 ---
 
-## Verificación manual (flujo estándar)
+## Tests unitarios
 
-Después de implementar cualquier módulo:
+Cuando el usuario pida un test unitario para una función:
 
-```
-1. Iniciar sesión con el rol que usa ese módulo
-2. Probar CRUD completo:
-   - Listar registros (index)
-   - Crear nuevo registro (create + store)
-   - Ver detalle (show)
-   - Editar (edit + update)
-   - Eliminar (destroy)
-3. Verificar que los permisos funcionan:
-   - Con rol que tiene acceso → funciona
-   - Con rol sin acceso → redirige o da 403
-4. Probar casos edge:
-   - Campos vacíos
-   - Valores inválidos
-   - Registros que no existen (404)
-```
+- Genera un test por caso, con nombre descriptivo que explique el escenario.
+- Cubre: caso normal (input válido → output esperado), casos edge (input límite), caso de falla (input inválido → comportamiento esperado).
+- Mockea solo lo que sea necesario: efectos secundarios (BD, HTTP, tiempo), no la lógica que se está probando.
+- Stack: Jest + TypeScript o PHPUnit según el proyecto.
 
 ---
 
-## Tests de aceptación: cómo definirlos
+## Tests de integración (endpoints)
 
-Antes de implementar un feature, define los criterios de aceptación:
+Cuando el usuario pida un test de integración para un endpoint, genera casos para:
 
-```markdown
-Feature: Crear producto
-- ✅ Con datos válidos → producto creado, aparece en listado
-- ✅ Sin nombre → error de validación "El nombre es requerido"
-- ✅ Precio negativo → error de validación "El precio debe ser mayor a 0"
-- ✅ Usuario sin rol admin → 403 Forbidden
-- ✅ Stock en 0 → producto creado, se muestra como "sin stock"
-```
+- Datos válidos → código de respuesta correcto + estructura del body esperado.
+- Campo requerido faltante → 400 con mensaje de error.
+- Sin token de auth → 401.
+- Token válido pero rol insuficiente → 403.
+- Recurso no encontrado → 404.
+- Duplicado (si aplica) → 409.
 
----
-
-## Cómo pedir tests a Claude
-
-### Test unitario (función de lógica de negocio)
-
-```
-Genera test unitario para la función calcularDescuento en src/services/pricing.service.ts.
-Casos a cubrir:
-- Descuento del 10% sobre precio de 100 → 90
-- Descuento del 0% → precio sin cambio
-- Descuento del 100% → 0
-- Precio negativo → lanzar excepción
-Usa Jest con TypeScript.
-```
-
-### Test de integración (endpoint)
-
-```
-Genera test de integración para POST /api/productos.
-Casos:
-- Con datos válidos → 201 + objeto creado en respuesta
-- Sin campo nombre → 400 con mensaje de error
-- Sin token de auth → 401
-- Con rol no administrador → 403
-Usa Supertest + Jest. El endpoint está en src/modules/productos/productos.controller.ts
-```
-
-### Test que reproduce un bug
-
-```
-Escribe un test que reproduzca el bug:
-- Bug: processPayment retorna undefined cuando provider está caído
-- Archivo: src/services/payment.service.ts
-- El test debe FALLAR antes del fix y PASAR después.
-```
+Stack: Supertest + Jest (NestJS) o Feature Tests de Laravel.
 
 ---
 
-## Flujo TDD para bugs
+## Test que reproduce un bug (TDD)
 
+Cuando el usuario pida un test que reproduzca un bug:
+
+1. Escribe el test de forma que **falle antes del fix**.
+2. El test debe **pasar después del fix**.
+3. El nombre del test debe describir el escenario del bug (no "test de bug" — sino "debe rechazar un precio negativo").
+
+---
+
+## Tests de autorización y permisos
+
+Siempre incluye tests de autorización para módulos con roles:
+
+- Un usuario con rol `USER` no puede acceder a endpoints de `ADMIN`.
+- Un usuario no puede modificar recursos que pertenecen a otro usuario.
+- Un token expirado devuelve 401.
+- Un token con payload manipulado devuelve 401.
+
+---
+
+## Tests de WebSockets
+
+Para eventos en tiempo real:
+
+- Simula la conexión con un token JWT válido — debe conectar.
+- Simula la conexión sin token — debe rechazar la conexión.
+- Simula la emisión de un evento y verifica que llega a los clientes suscritos al room correcto.
+- Simula que un cliente de otro room no recibe el evento.
+
+---
+
+## Checklist de verificación manual
+
+Cuando el usuario pida verificación manual de un módulo, genera:
+
+- Pasos de prueba para CRUD completo como usuario con el rol correspondiente.
+- Verificación de permisos: qué debe funcionar y qué debe dar 403.
+- Casos edge a probar manualmente.
+- Comandos para correr los tests automatizados.
+
+---
+
+## Verificación final pre-deploy
+
+Cuando el usuario esté preparando un deploy, genera:
+
+1. Comando para correr todos los tests.
+2. Comando para build de producción.
+3. Comando para lint sin errores.
+4. Indicación clara de qué comandos son seguros en producción y cuáles solo en local/staging.
+
+### Comandos de referencia
+
+**Node.js / NestJS**
+```bash
+npm run test                           # todos los tests
+npm run test -- [archivo.spec]         # un archivo específico
+npm run test:cov                       # con cobertura
+npm run build && npm run lint          # verificación pre-deploy
 ```
-1. Escribir test que reproduce el bug (falla)
-   ↓
-2. Verificar que el test falla por la razón correcta
-   ↓
-3. Aplicar el fix mínimo
-   ↓
-4. Verificar que el test pasa
-   ↓
-5. Verificar que los otros tests siguen pasando
+
+**Laravel**
+```bash
+php artisan test                                  # todos
+php artisan test --filter=[NombreTest]            # filtro
+./vendor/bin/phpunit --testdox                    # output legible
+php artisan migrate:fresh --seed                  # reset local (nunca en producción)
 ```
 
 ---
 
-## Comandos de testing por stack
+## Restricciones
 
-### Node.js / NestJS
-
-```powershell
-npm run test                    # todos los tests
-npm run test:watch              # modo watch
-npm run test:cov                # con cobertura
-npm run test -- payment.service # solo un archivo
-```
-
-### Laravel
-
-```powershell
-php artisan test                           # todos
-php artisan test --filter=ProductoTest     # solo un test
-php artisan test tests/Feature/ProductoTest.php
-./vendor/bin/phpunit --testdox             # output legible
-```
-
----
-
-## Checklist de QA mínima antes de commit
-
-- [ ] El feature/fix funciona manualmente en el navegador o Postman
-- [ ] No hay errores en consola (frontend y backend)
-- [ ] Los permisos de rol se aplican correctamente
-- [ ] Los tests existentes siguen pasando
-- [ ] Si se añadió lógica de negocio nueva: hay al menos 1 test unitario
-- [ ] Los casos edge más obvios están cubiertos
-
----
-
-## Verificación final de proyecto
-
-Antes del deploy:
-
-```powershell
-# Node.js
-npm run test
-npm run build          # debe terminar sin errores
-npm run lint           # sin errores de lint
-
-# Laravel
-php artisan migrate:fresh --seed   # partida limpia sin errores
-php artisan test                    # todos los tests en verde
-npm run build                       # frontend compilado para producción
-```
-
----
-
-## Reglas al usar este skill
-
-- ✅ Prueba manual después de cada módulo, sin excepción.
-- ✅ Los bugs se verifican con tests antes de corregirse.
-- ✅ Los criterios de aceptación se definen antes de implementar.
-- ❌ No hacer commit de cambios que no hayas verificado manualmente.
-- ❌ No omitir la prueba de permisos por rol.
-
----
-
-## Siguiente paso
-
-→ [`09-code-review.md`](09-code-review.md) — Revisión de código asistida por Claude.
+- Un test por caso — no crear tests que prueben múltiples cosas a la vez.
+- Los nombres de los tests deben ser descriptivos: "debería devolver 403 cuando el rol es USER".
+- No mockear la lógica que se está probando — solo las dependencias externas.
+- Los tests de integración deben usar una BD de prueba separada, nunca la de desarrollo.

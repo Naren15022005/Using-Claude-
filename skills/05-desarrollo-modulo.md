@@ -1,210 +1,113 @@
-# 🔨 Skill 05 — Desarrollo Módulo por Módulo
+# Skill 05 — Desarrollo Módulo por Módulo
 
-> **Fase:** Desarrollo activo  
-> **Objetivo:** Implementar cada módulo de forma completa y ordenada antes de pasar al siguiente.
-
----
-
-## Cuándo usar este skill
-
-- Al comenzar la implementación de cualquier módulo nuevo.
-- Al retomar un módulo que quedó incompleto.
-- Como referencia para mantener el orden y no saltarse pasos.
+Aplica estas instrucciones cuando el usuario esté implementando cualquier módulo nuevo o retomando uno incompleto.
 
 ---
 
-## El ciclo de desarrollo (orden obligatorio)
+## Rol
 
-### Node.js / NestJS
-
-```
-Schema (Prisma) → Migración → Módulo NestJS → Servicio → Controller → DTOs → Rutas → Frontend → Prueba manual → Fix → Siguiente módulo
-```
-
-### Laravel
-
-```
-Migración → Modelo → Resource Controller → Rutas → Vistas Blade → Prueba manual → Fix → Siguiente módulo
-```
+Actúa como desarrollador senior del stack correspondiente. Implementa el módulo completo en el orden correcto.
 
 ---
 
-## Ciclo detallado: Laravel
+## Orden de implementación (Laravel)
 
-### Paso 1 — Migración
-
-```powershell
-php artisan make:migration create_productos_table
-```
-
-```php
-Schema::create('productos', function (Blueprint $table) {
-    $table->id();
-    $table->string('nombre');
-    $table->decimal('precio', 10, 2);
-    $table->integer('stock')->default(0);
-    $table->foreignId('categoria_id')->constrained();
-    $table->timestamps();
-    $table->softDeletes();
-});
-```
-
-### Paso 2 — Modelo
-
-```php
-class Producto extends Model {
-    use SoftDeletes;
-    protected $fillable = ['nombre', 'precio', 'stock', 'categoria_id'];
-    protected $casts = ['precio' => 'decimal:2'];
-    
-    public function categoria() { return $this->belongsTo(Categoria::class); }
-}
-```
-
-### Paso 3 — Resource Controller
-
-```powershell
-php artisan make:controller Admin/ProductoController --resource --model=Producto
-```
-
-Métodos a implementar: `index`, `create`, `store`, `show`, `edit`, `update`, `destroy`.
-
-### Paso 4 — Rutas en el grupo de rol
-
-```php
-Route::group([
-    'middleware' => ['auth', 'role:administrador'],
-    'as' => 'admin.',
-    'prefix' => 'admin'
-], function () {
-    Route::resource('productos', ProductoController::class);
-});
-```
-
-### Paso 5 — Vistas Blade
-
-Orden: `index.blade.php` → `create.blade.php` → `edit.blade.php` → `show.blade.php`
-
-Estructura de carpeta:
-```
-resources/views/Admin/Productos/
-├── index.blade.php
-├── create.blade.php
-├── edit.blade.php
-└── show.blade.php
-```
-
-### Paso 6 — Prueba manual
-
-1. Abrir el navegador
-2. Iniciar sesión con el rol correspondiente
-3. Probar cada acción: listar, crear, editar, eliminar
-4. Verificar que los permisos de rol se aplican correctamente
+1. Migración con todos los campos, foreign keys y `softDeletes` si aplica.
+2. Modelo con `$fillable`, `$casts` y relaciones definidas.
+3. Resource Controller con `php artisan make:controller [Rol]/[Nombre]Controller --resource --model=[Nombre]`.
+4. Rutas en el grupo de rol correspondiente en `routes/web.php` con prefijo y `as` del rol.
+5. Vista `index.blade.php` con tabla y botones de acción.
+6. Vista `create.blade.php` con formulario y validación inline.
+7. Vista `edit.blade.php` reutilizando el formulario de create.
 
 ---
 
-## Ciclo detallado: NestJS
+## Orden de implementación (NestJS)
 
-### Paso 1 — Schema Prisma
-
-```prisma
-model Producto {
-  id          Int       @id @default(autoincrement())
-  nombre      String
-  precio      Decimal   @db.Decimal(10, 2)
-  stock       Int       @default(0)
-  categoriaId Int
-  categoria   Categoria @relation(fields: [categoriaId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
+1. Modelo Prisma en `schema.prisma` + migración con `npx prisma migrate dev --name add_[nombre]`.
+2. Módulo NestJS con estructura:
 ```
-
-```powershell
-npx prisma migrate dev --name add_productos
-```
-
-### Paso 2 — Módulo NestJS
-
-```
-src/modules/productos/
-├── productos.module.ts
-├── productos.controller.ts
-├── productos.service.ts
+src/modules/[nombre]/
+├── [nombre].module.ts
+├── [nombre].controller.ts
+├── [nombre].service.ts
 └── dto/
-    ├── create-producto.dto.ts
-    └── update-producto.dto.ts
+    ├── create-[nombre].dto.ts
+    └── update-[nombre].dto.ts
 ```
-
-### Paso 3 — DTOs con validación
-
-```typescript
-export class CreateProductoDto {
-  @IsString() @IsNotEmpty() nombre: string;
-  @IsNumber() @Min(0) precio: number;
-  @IsInt() @Min(0) stock: number;
-}
-```
+3. DTOs con decoradores de `class-validator`.
+4. Service con los métodos: `findAll`, `findOne`, `create`, `update`, `remove`.
+5. Controller con endpoints REST y guards de autenticación y rol.
 
 ---
 
-## Prompt para pedir un módulo completo a Claude
+## Implementación de autenticación JWT
 
-```
-Implementa el módulo Productos para [Laravel/NestJS]:
-- Entidad: [campos de la migración]
-- Relaciones: [relaciones con otras entidades]
-- Acceso: solo rol administrador
-- Incluye: migración + modelo + controller + rutas + vistas básicas (index, create, edit)
-- Usa los patrones existentes del proyecto (ver src/modules/usuarios como referencia)
-No modifiques archivos que no sean de este módulo.
-```
+Cuando el usuario pida implementar el módulo de auth, sigue este orden:
 
----
+### NestJS:
+1. Tablas en Prisma: `User`, `Role`, `Permission`, `RolePermission`, `UserRole`, `RefreshToken` con migraciones.
+2. `AuthModule` con estrategia JWT local y refresh.
+3. `JwtAuthGuard` (global) + `RolesGuard`.
+4. Decoradores `@Roles()` y `@Public()`.
+5. Endpoints: `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me`.
+6. Payload del JWT: `{ sub, email, roles }` — nunca datos sensibles.
+7. Refresh token: httpOnly cookie + tabla en BD para revocación + rotación en cada uso.
 
-## Gestión de interdependencias
+### Laravel:
+1. Migraciones: users, roles, permissions (Spatie crea sus propias tablas).
+2. `config/auth.php` con guards `api` + `web`.
+3. `AuthController`: login, refresh, logout, me.
+4. Middleware: `auth:sanctum` + `CheckRole`.
+5. Seeder de roles y permisos basado en la matriz de permisos de `readmes/logica.md`.
 
-Cuando un módulo toca múltiples capas (controller + vista + modelo + ruta), pedir que se trabaje todo junto para no romper nada:
-
-```
-Modifica en un solo paso:
-1. src/modules/productos/productos.service.ts — añadir método buscarPorCategoria
-2. src/modules/productos/productos.controller.ts — nuevo endpoint GET /productos/categoria/:id
-3. frontend/src/app/productos/page.tsx — filtro por categoría en la UI
-```
-
----
-
-## Cómo extender una funcionalidad existente
-
-1. Pedir a Claude que lea primero los archivos del módulo a extender.
-2. Identificar qué ya existe para no duplicar lógica.
-3. Extender usando los patrones ya establecidos (misma estructura, mismos nombres).
-4. Verificar que no se rompen módulos existentes.
-5. Si la extensión afecta la BD: crear nueva migración, nunca modificar migraciones ya corridas.
+Restricciones de auth que siempre se deben aplicar:
+- Nunca almacenar el access token en localStorage — usar memoria o sessionStorage.
+- El refresh token solo en httpOnly cookie.
+- Contraseñas siempre con bcrypt (cost factor >= 12).
+- Rate limiting en endpoints de auth: máx 10 intentos/minuto por IP.
+- Los tokens expirados deben devolver 401, no 403.
 
 ---
 
-## Señales de que el módulo está terminado
+## Implementación de WebSockets
 
-- [ ] Migración aplicada sin errores
-- [ ] CRUD completo funciona manualmente
-- [ ] Permisos de rol verificados
-- [ ] Sin errores en consola ni en logs
-- [ ] Documento de flujo actualizado con lo implementado
+Cuando el usuario pida implementar la capa de tiempo real, sigue este orden:
+
+### NestJS (Socket.IO):
+1. `EventsModule` con `@WebSocketGateway({ cors: { origin: process.env.FRONTEND_URL } })`.
+2. Middleware de autenticación en `handleConnection`: valida JWT del handshake antes de aceptar la conexión. Rechazar conexiones sin token válido.
+3. Por cada evento de `readmes/logica.md`:
+   - `@SubscribeMessage('[evento]')` en el gateway.
+   - Emitir al room correcto con `server.to(room).emit('[evento]', payload)`.
+4. Función `joinRoom`: el cliente envía su contexto y se suscribe al canal correcto.
+5. Función `broadcastToRole`: emite solo a sockets autenticados con un rol específico.
+6. En los Services que modifican datos: inyectar `EventsGateway` y llamar el broadcast correspondiente.
+
+### Laravel (Reverb):
+1. Configurar `broadcasting.php` con driver reverb.
+2. Crear Events que implementen `ShouldBroadcast` para cada evento del `logica.md`.
+3. Usar canales privados (`PrivateChannel`) para eventos que requieren autenticación.
+4. Definir la autorización de canales en `routes/channels.php`.
 
 ---
 
-## Reglas al usar este skill
+## Extender un módulo existente
 
-- ✅ Un módulo completo antes de empezar el siguiente.
-- ✅ Prueba manual después de cada módulo.
-- ✅ El mismo estilo de código que el resto del proyecto.
-- ❌ No empezar otro módulo si hay bugs conocidos en el actual.
-- ❌ No modificar migraciones ya aplicadas en producción — crear nueva migración.
+Cuando el usuario pida añadir funcionalidad a un módulo ya implementado:
+1. Lee primero todos los archivos del módulo.
+2. Identifica exactamente qué archivos hay que modificar.
+3. Presenta el plan (lista de archivos + qué se cambia en cada uno) y espera aprobación.
+4. Si necesitas un campo nuevo en la BD: nueva migración — nunca modificar una migración existente.
+5. Mantén los mismos patrones del módulo actual.
 
 ---
 
-## Siguiente paso
+## Restricciones generales
 
-→ [`06-comunicacion-agente.md`](06-comunicacion-agente.md) — Cómo pedir trabajo a Claude de forma eficiente.
+- Sin `any` en TypeScript.
+- No toques módulos ni archivos ajenos al módulo que se está implementando.
+- El guard de roles va en el Controller, no en el Service.
+- Manejo de errores con `HttpException` (NestJS) o excepciones de Laravel — nunca `try/catch` vacíos.
+- La validación va en los DTOs/FormRequests, no en los modelos.
+- Antes de implementar algo que afecte más de 3 archivos, presenta el plan y espera aprobación.

@@ -1,194 +1,97 @@
-# 📝 Skill 11 — Documentación
+# Skill 11 — Documentación
 
-> **Fase:** Todo el ciclo de vida  
-> **Objetivo:** Mantener la documentación sincronizada con el código real del proyecto en todo momento.
-
----
-
-## Cuándo usar este skill
-
-- Después de implementar cualquier módulo o feature.
-- Al terminar un sprint.
-- Al onboardear a un nuevo colaborador.
-- Antes de hacer deploy (la documentación refleja el estado real).
+Aplica estas instrucciones cuando el usuario haya implementado un módulo, al terminar una sesión, o antes de un deploy. La documentación debe actualizarse en la misma sesión en que se implementa algo.
 
 ---
 
-## Principio central
+## Rol
 
-> **La documentación desactualizada es peor que no tener documentación.**
-
-Cada vez que se implementa algo, se actualiza el documento correspondiente en la misma sesión. No se pospone.
+Actúa como desarrollador senior que mantiene la documentación técnica al día. Documenta solo lo que realmente existe en el código — nunca inventes funcionalidad.
 
 ---
 
-## Estructura de documentación por proyecto
+## Actualizar docs después de implementar un módulo
+
+Cuando el usuario indique qué se implementó en la sesión, actualiza:
+
+### `readmes/flujo_backend.md`
+- Mueve las tareas correspondientes de "Pendiente" a "Implementado".
+- Añade los endpoints nuevos con formato: `MÉTODO /ruta — descripción`.
+- Actualiza el porcentaje de avance estimado (ser honesto — no inflar).
+
+### `readmes/bd.md`
+- Añade las tablas nuevas con sus columnas principales.
+- Actualiza las relaciones si cambiaron.
+- Registra los índices añadidos.
+
+### `readmes/tareas.md`
+- Marca como completadas `[x]` las tareas terminadas.
+- Añade las tareas nuevas que surgieron durante la implementación.
+
+**Restricción**: no modifiques secciones que no correspondan a lo implementado en esta sesión. No añadas información sobre funcionalidad no implementada.
+
+---
+
+## Generar README.md inicial del proyecto
+
+Cuando el usuario pida el README principal del proyecto, genera un documento que permita a un desarrollador que clona el repo levantar el proyecto desde cero sin preguntar nada.
+
+Estructura obligatoria:
+
+1. Nombre y descripción en una línea.
+2. Stack tecnológico (lista simple con versiones).
+3. Prerequisitos (versiones necesarias de Node/PHP/Docker).
+4. Instalación paso a paso (comandos exactos y ejecutables).
+5. Credenciales de demo del seeder (usuario admin + contraseña).
+6. Estructura de carpetas simplificada (solo niveles principales).
+7. Comandos de uso frecuente (levantar, migrar, testear, buildear).
+
+Formato: markdown limpio, sin emojis, comandos en bloques de código con el shell correcto.
+
+---
+
+## Actualizar docs al terminar un sprint
+
+Cuando el usuario indique que terminó un sprint, actualiza:
+
+1. `readmes/tareas.md` — marca completadas, añade nuevas si surgieron.
+2. `readmes/flujo_backend.md` — estado actualizado del backend.
+3. `readmes/flujo_frontend.md` — estado actualizado del frontend (si aplica).
+
+Para cada decisión técnica importante tomada durante el sprint, regístrala en el documento correspondiente con:
+- Qué se decidió.
+- Por qué (la razón técnica o de negocio).
+- Fecha de la decisión.
+
+---
+
+## Estructura de documentación del proyecto
+
+Mantén siempre esta estructura en el proyecto:
 
 ```
 proyecto/
-├── README.md                   ← Punto de entrada: cómo arrancar el proyecto
+├── README.md                   → Cómo arrancar (orientado a developer nuevo)
 └── readmes/
-    ├── logica.md               ← Lógica de negocio y reglas (skill 01)
-    ├── tareas.md               ← Desglose de tareas y sprints (skill 02)
-    ├── flujo-final.md          ← Arquitectura y estado real del sistema
-    ├── flujo_backend.md        ← Estado e implementación del backend
-    ├── flujo_frontend.md       ← Estado e implementación del frontend
-    └── bd.md                   ← Diseño y esquema de base de datos
+    ├── logica.md               → Dominio, reglas y endpoints (skill 01)
+    ├── tareas.md               → Tareas y sprints (skill 02)
+    ├── flujo-final.md          → Arquitectura y decisiones técnicas
+    ├── flujo_backend.md        → Estado del backend
+    ├── flujo_frontend.md        → Estado del frontend
+    ├── bd.md                   → Schema y relaciones de BD
+    └── design-system.md        → Paleta, tipografía, componentes y layouts
 ```
 
 ---
 
-## Contenido de cada documento
+## Estados estándar para los docs
 
-### README.md (portada del proyecto)
-
-```markdown
-# [Nombre del Proyecto]
-
-## Descripción
-[Una línea describiendo qué hace el sistema]
-
-## Stack
-[Lista del stack tecnológico]
-
-## Cómo arrancar
-
-### Prerequisitos
-- [versiones de Node, PHP, Docker, etc.]
-
-### Instalación
-[Pasos para levantar el entorno desde cero]
-
-### Credenciales de demo
-- Admin: admin@demo.com / Admin123!
-```
-
-### readmes/flujo_backend.md
-
-```markdown
-# Estado del Backend
-
-## ✅ Implementado
-- [lista de módulos y endpoints funcionando]
-
-## 🔄 En progreso
-- [lo que está a medias]
-
-## ❌ Pendiente
-- [tareas de backend sin empezar]
-
-## Porcentaje de avance estimado: [X]%
-
-## Comandos útiles
-[comandos frecuentes para esa capa]
-
-## Decisiones de diseño
-[por qué se eligió X en lugar de Y]
-```
-
-### readmes/flujo_frontend.md
-
-```markdown
-# Estado del Frontend
-
-## ✅ Implementado
-- [lista de páginas y componentes funcionando]
-
-## 🔄 En progreso
-- [lo que está a medias]
-
-## ❌ Pendiente
-- [páginas/componentes sin implementar]
-
-## Porcentaje de avance estimado: [X]%
-
-## Rutas del sistema
-| Ruta | Componente | Rol requerido |
-|------|-----------|---------------|
-| /admin/productos | ProductosIndex | administrador |
-```
-
-### readmes/bd.md
-
-```markdown
-# Base de Datos
-
-## Schema actual
-[Lista de tablas con columnas principales]
-
-## Relaciones
-[Diagrama ASCII o descripción de relaciones]
-
-## Migraciones aplicadas
-[Lista de migraciones en orden]
-
-## Datos de seed
-[Qué datos crea el seeder y para qué]
-```
-
----
-
-## Prompt para actualizar documentación después de implementar
+Usa siempre estos estados para indicar el avance de cada sección:
 
 ```
-Actualiza readmes/flujo_backend.md con lo que se implementó en esta sesión:
-- Módulo: [nombre]
-- Lo que se creó: [lista de archivos]
-- Endpoints nuevos: [lista]
-- Mueve las tareas correspondientes de "Pendiente" a "Implementado"
-- Actualiza el porcentaje de avance estimado
-No cambies secciones que no correspondan a esta sesión.
+✅ Implementado y funcionando
+🔄 En progreso / parcialmente implementado
+❌ Pendiente, no empezado
 ```
 
----
-
-## Prompt para generar README.md inicial
-
-```
-Genera el README.md principal del proyecto con:
-- Descripción de una línea
-- Stack tecnológico (ver readmes/flujo-final.md)
-- Instrucciones de instalación desde cero (ver readmes/flujo-final.md para comandos)
-- Credenciales de demo del seeder
-- Estructura de carpetas simplificada
-Formato: markdown limpio, orientado a un developer que clona el repo por primera vez.
-```
-
----
-
-## Convenciones de documentación
-
-| Aspecto | Convención |
-|---------|-----------|
-| Idioma | Español |
-| Nombres de archivos | snake_case (`flujo_backend.md`) |
-| Estado de tareas | ✅ Hecho / 🔄 En progreso / ❌ Pendiente |
-| Porcentaje de avance | Estimación honesta, actualizada en cada sesión |
-| Comandos | Siempre en bloques de código con el shell correcto |
-| Decisiones técnicas | Registrar el por qué, no solo el qué |
-
----
-
-## Documentar decisiones de diseño
-
-Cuando se toma una decisión técnica importante, registrarla en el documento de flujo correspondiente:
-
-```markdown
-## Decisiones de diseño
-
-### Por qué Redis para locks de concurrencia
-El sistema permite múltiples usuarios comprando el mismo producto simultáneamente.
-Se eligió Redis locks en lugar de transacciones DB porque las transacciones en MySQL
-no previenen race conditions entre procesos distintos con el mismo dato.
-Fecha: [fecha]
-```
-
----
-
-## Reglas al usar este skill
-
-- ✅ Actualizar la documentación en la misma sesión en que se implementa algo.
-- ✅ El README.md debe permitir a cualquier desarrollador levantar el proyecto desde cero.
-- ✅ Registrar el *por qué* de las decisiones técnicas importantes.
-- ❌ No documentar código obvio — documentar decisiones y comportamientos no evidentes.
-- ❌ No tener documentación que contradiga el código actual.
+El porcentaje de avance debe ser una estimación honesta del avance real del módulo o proyecto.
